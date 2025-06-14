@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Team Jaggi AI Dashboard (Live Hosted)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      margin: 0;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: gold;
+      color: black;
+      font-weight: bold;
+    }
+    .hidden { display: none; }
+    .log-entry {
+      border-bottom: 1px solid #333;
+      padding: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="login">
+  <h2>Login - Team Jaggi</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" class="hidden">
+  <h2>AI Prediction Panel</h2>
+  <p><strong>Last 3 Results:</strong></p>
+  <input type="text" id="historyInput" placeholder="e.g. BIG,SMALL,BIG">
+  <button onclick="fetchPrediction()">Get Prediction</button>
+  <div id="predictionResult" style="margin-top: 20px;"></div>
+  <h3>Prediction History</h3>
+  <div id="logArea"></div>
+  <button onclick="logout()" style="margin-top:20px;">Logout</button>
+</div>
+
+<script>
+const API_URL = "https://team-jaggi-api.vercel.app/api/predict";
+
+function login() {
+  const user = document.getElementById('username').value;
+  const pass = document.getElementById('password').value;
+  if (user === "Mr Jaggi" && pass === "Trusted Jaggi") {
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+  } else {
+    alert("Incorrect credentials!");
+  }
+}
+
+function logout() {
+  location.reload();
+}
+
+async function fetchPrediction() {
+  const history = document.getElementById("historyInput").value;
+  if (!history || history.split(",").length !== 3) {
+    alert("Please enter exactly 3 values: BIG or SMALL");
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}?history=${history}`);
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById("predictionResult").innerHTML = `<span style="color:red;">Error: ${data.error}</span>`;
+    } else {
+      document.getElementById("predictionResult").innerHTML =
+        `<b>Prediction:</b> ${data.prediction}<br><b>Confidence:</b> ${data.confidence}`;
+      addToLog(history, data.prediction, data.confidence);
+    }
+  } catch (err) {
+    document.getElementById("predictionResult").innerHTML = `<span style="color:red;">Failed to fetch prediction</span>`;
+  }
+}
+
+function addToLog(history, prediction, confidence) {
+  const log = document.getElementById("logArea");
+  const entry = document.createElement("div");
+  entry.classList.add("log-entry");
+  entry.innerHTML = `<b>${new Date().toLocaleTimeString()}</b>: [${history}] → <b>${prediction}</b> (${confidence})`;
+  log.prepend(entry);
+}
+</script>
+
+</body>
+</html>
